@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1742022500 source:e:\test1\main.cpp
+	<cstdlib>
+	<cstdint>
+	<cstdio>
+	<cstring>
+	<cassert>
+	<SDL.h>
+	<SDL_ttf.h>
+	"colors.h"
+
+1742022663 e:\test1\colors.h
+
