@@ -7,7 +7,7 @@
 #include <ctime>
 #include <algorithm>
 #include <string>
-
+#include <cmath>
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int OBJECT_SIZE = 120;
@@ -52,8 +52,33 @@ struct GameObject {
         }
     }
     
-    bool isSliced(int mouseX, int mouseY) {
-        return (mouseX >= x && mouseX <= x + OBJECT_SIZE && mouseY >= y && mouseY <= y + OBJECT_SIZE);
+    bool isSliced(int prevX, int prevY, int mouseX, int mouseY) {
+        // Định nghĩa hitbox
+        SDL_Rect objRect = {
+            x,
+            y,
+            OBJECT_SIZE / 2,
+            OBJECT_SIZE / 2
+        };
+    
+        // Kiểm tra giao điểm với đoạn thẳng từ prev đến current
+        bool intersects = SDL_IntersectRectAndLine(&objRect, &prevX, &prevY, &mouseX, &mouseY);
+    
+        // Kiểm tra khoảng cách từ điểm cuối của đường chém (mouseX, mouseY) đến tâm vật thể
+        float centerX = x + OBJECT_SIZE / 4; // Tâm của hitbox
+        float centerY = y + OBJECT_SIZE / 4;
+        float dx = mouseX - centerX;
+        float dy = mouseY - centerY;
+        float distance = sqrt(dx * dx + dy * dy);
+        bool closeEnough = distance < OBJECT_SIZE; // Chỉ chấp nhận nếu điểm cuối gần trong phạm vi OBJECT_SIZE
+    
+        // Đảm bảo có đủ di chuyển để coi là chém
+        float movementX = mouseX - prevX;
+        float movementY = mouseY - prevY;
+        bool hasMovement = (movementX * movementX + movementY * movementY) > 25;
+    
+        // Chỉ coi là chém khi: có giao điểm, điểm cuối đủ gần, và có di chuyển
+        return intersects && closeEnough && hasMovement;
     }
 };
 
@@ -137,7 +162,7 @@ void shakeScreen(SDL_Window* window, int intensity, int duration) {
 }
 
 
-int main(int argc, char* argv[]) {
+int main() {
     srand(time(0));
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
