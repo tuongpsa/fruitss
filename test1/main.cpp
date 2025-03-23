@@ -211,38 +211,54 @@ SDL_GetWindowPosition(window, &windowX, &windowY);
         std::vector<GameObject> newObjects;
         for (auto& obj : objects) {
             if (mouseDown && obj.isSliced(mouseX, mouseY) && !obj.sliced) {
-                if (obj.type == BOMB) {
+                if (obj.type == BOMB && obj.isSliced(mouseX, mouseY)) {
                     shakeScreen(window, 5, 10);
-                    SDL_Color red = {255, 0, 0, 255}; // Màu đỏ
-                    SDL_Surface* surface = TTF_RenderText_Solid(font, "Game Over!", red);
+                
+                    SDL_Color red = {255, 0, 0, 255};
+                    SDL_Surface* surface = TTF_RenderText_Solid(font, "Game Over! Press R to Restart", red);
                     
-                    if (surface == nullptr) {
+                    if (!surface) {
                         std::cout << "Failed to create text surface: " << TTF_GetError() << std::endl;
-                        quit = true;
-                        return -1;
+                        continue;
                     }
                 
                     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
                     
-                    if (texture == nullptr) {
+                    if (!texture) {
                         std::cout << "Failed to create texture: " << SDL_GetError() << std::endl;
                         SDL_FreeSurface(surface);
-                        quit = true;
-                        return -1;
+                        continue;
                     }
                 
                     SDL_Rect textRect = {SCREEN_WIDTH / 2 - surface->w / 2, SCREEN_HEIGHT / 2 - surface->h / 2, surface->w, surface->h};
                 
-                    SDL_FreeSurface(surface);  // Chỉ giải phóng sau khi tạo texture thành công
-                
+                    SDL_FreeSurface(surface);
                     SDL_RenderCopy(renderer, texture, NULL, &textRect);
                     SDL_RenderPresent(renderer);
-                
-                    SDL_Delay(2000); 
-                
                     SDL_DestroyTexture(texture);
-                    quit = true;
+                
+                    bool waitingForRestart = true;
+                    while (waitingForRestart) {
+                        SDL_Event restartEvent;
+                        while (SDL_PollEvent(&restartEvent)) {
+                            if (restartEvent.type == SDL_QUIT) {
+                                quit = true;
+                                waitingForRestart = false;
+                            } else if (restartEvent.type == SDL_KEYDOWN && restartEvent.key.keysym.sym == SDLK_r) {
+                                objects.clear();
+                                score = 0;
+                                spawnTimer = 0;
+                                trail.points.clear();
+                                mouseDown = false;
+                                waitingForRestart = false;
+                                SDL_RenderClear(renderer); // Xóa màn hình
+                                SDL_RenderPresent(renderer); // Cập nhật lại
+                            }
+                            
+                        }
+                    }
                 }
+                
                 
                  else if (obj.type == FRUIT) {
                     obj.sliced = true;
