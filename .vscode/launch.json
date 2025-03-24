@@ -4,7 +4,7 @@
             "name": "C/C++: g++.exe build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "E:/test1/bin/Debug/fruits.exe",
+            "program": "E:/test1/bin/Debug/test1.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "E:/test1/bin/Debug",
