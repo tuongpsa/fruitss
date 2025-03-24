@@ -6,9 +6,9 @@
             "command": "E:/project/MinGW/bin/g++.exe",
             "args": [
     "-g",
-    "E:\\test1\\main.cpp",
+    "E:\\fruitss\\test1\\main.cpp",
     "-o",
-    "E:\\test1\\bin\\Debug\\test1.exe",
+    "E:\\fruitss\\test1\\bin\\Debug\\test1.exe",
     "-lmingw32",
     "-lSDL2main",
     "-lSDL2",

@@ -1,6 +1,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -129,18 +130,29 @@ void close(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font) {
     SDL_Quit();
 }
 
-void renderText(SDL_Renderer* renderer, TTF_Font* font, int score) {
+void renderText(SDL_Renderer* renderer, TTF_Font* font, int score, int hp) {
     SDL_Color white = {255, 255, 255, 255};
     std::string scoreText = "Score: " + std::to_string(score);
-    SDL_Surface* surface = TTF_RenderText_Solid(font, scoreText.c_str(), white);
-    if (surface) {
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-        if (texture) {
-            SDL_Rect textRect = {10, 10, surface->w, surface->h};
-            SDL_RenderCopy(renderer, texture, NULL, &textRect);
-            SDL_DestroyTexture(texture);
+    SDL_Surface* scoreSurface = TTF_RenderText_Solid(font, scoreText.c_str(), white);
+    if (scoreSurface) {
+        SDL_Texture* scoreTexture = SDL_CreateTextureFromSurface(renderer, scoreSurface);
+        if (scoreTexture) {
+            SDL_Rect scoreRect = {10, 10, scoreSurface->w, scoreSurface->h};
+            SDL_RenderCopy(renderer, scoreTexture, NULL, &scoreRect);
+            SDL_DestroyTexture(scoreTexture);
         }
-        SDL_FreeSurface(surface);
+        SDL_FreeSurface(scoreSurface);
+    }
+    std::string hpText = "HP: " + std::to_string(hp);
+    SDL_Surface* hpSurface = TTF_RenderText_Solid(font, hpText.c_str(), white);
+    if (hpSurface) {
+        SDL_Texture* hpTexture = SDL_CreateTextureFromSurface(renderer, hpSurface);
+        if (hpTexture) {
+            SDL_Rect hpRect = {10, 40, hpSurface->w, hpSurface->h};
+            SDL_RenderCopy(renderer, hpTexture, NULL, &hpRect);
+            SDL_DestroyTexture(hpTexture);
+        }
+        SDL_FreeSurface(hpSurface);
     }
 }
 
@@ -204,6 +216,67 @@ void drawCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
     }
 }
 
+// Hàm menu game
+void renderMenu(SDL_Renderer* renderer, TTF_Font* font, bool& inMenu, bool& quit, int mouseX, int mouseY, bool mouseDown) {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    SDL_Color white = {255, 255, 255, 255};
+    // Nút Start
+    SDL_Surface* startSurface = TTF_RenderText_Solid(font, "Start", white);
+    if (startSurface) {
+        int startW = startSurface->w;
+        int startH = startSurface->h;
+        SDL_Rect startRect = {SCREEN_WIDTH / 2 - startW / 2, SCREEN_HEIGHT / 2 - 50, startW, startH};
+        // Kiểm tra chuột hover
+        bool startHovered = (mouseX >= startRect.x && mouseX <= startRect.x + startRect.w &&
+                             mouseY >= startRect.y && mouseY <= startRect.y + startRect.h);
+        if (startHovered) {
+            startRect.w = static_cast<int>(startW * 0.9); // Thu nhỏ 90%
+            startRect.h = static_cast<int>(startH * 0.9);
+            startRect.x += (startW - startRect.w) / 2; // Căn giữa lại
+            startRect.y += (startH - startRect.h) / 2;
+            if (mouseDown) {
+                inMenu = false; // Thoát menu, bắt đầu game
+            }
+        }
+        SDL_Texture* startTexture = SDL_CreateTextureFromSurface(renderer, startSurface);
+        if (startTexture) {
+            SDL_RenderCopy(renderer, startTexture, NULL, &startRect);
+            SDL_DestroyTexture(startTexture);
+        }
+        SDL_FreeSurface(startSurface);
+    }
+
+    // Nút Exit
+    SDL_Surface* exitSurface = TTF_RenderText_Solid(font, "Exit", white);
+    if (exitSurface) {
+        int exitW = exitSurface->w;
+        int exitH = exitSurface->h;
+        SDL_Rect exitRect = {SCREEN_WIDTH / 2 - exitW / 2, SCREEN_HEIGHT / 2 + 50, exitW, exitH};
+        // Kiểm tra chuột hover
+        bool exitHovered = (mouseX >= exitRect.x && mouseX <= exitRect.x + exitRect.w &&
+                            mouseY >= exitRect.y && mouseY <= exitRect.y + exitRect.h);
+        if (exitHovered) {
+            exitRect.w = static_cast<int>(exitW * 0.9); // Thu nhỏ 90%
+            exitRect.h = static_cast<int>(exitH * 0.9);
+            exitRect.x += (exitW - exitRect.w) / 2; // Căn giữa lại
+            exitRect.y += (exitH - exitRect.h) / 2;
+            if (mouseDown) {
+                quit = true; // Thoát game
+            }
+        }
+        SDL_Texture* exitTexture = SDL_CreateTextureFromSurface(renderer, exitSurface);
+        if (exitTexture) {
+            SDL_RenderCopy(renderer, exitTexture, NULL, &exitRect);
+            SDL_DestroyTexture(exitTexture);
+        }
+        SDL_FreeSurface(exitSurface);
+    }
+
+    SDL_RenderPresent(renderer);
+}
+
 int main() {
     srand(time(0));
     SDL_Window* window = nullptr;
@@ -214,6 +287,7 @@ int main() {
     }
 
     bool quit = false;
+    bool inMenu = true; // Bắt đầu ở menu
     bool gameOver = false;
     SDL_Event e;
     std::vector<GameObject> objects;
@@ -221,11 +295,9 @@ int main() {
     int spawnTimer = 0;
     Trail trail;
     int score = 0;
+    int hp = 5;
     bool mouseDown = false;
     int mouseX = 0, mouseY = 0, prevMouseX = 0, prevMouseY = 0;
-
-    // Khởi tạo vật thể ban đầu
-    objects.push_back(GameObject(rand() % (SCREEN_WIDTH - OBJECT_SIZE), SCREEN_HEIGHT, FRUIT));
 
     while (!quit) {
         while (SDL_PollEvent(&e)) {
@@ -234,15 +306,17 @@ int main() {
             } else if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
                 mouseDown = true;
                 SDL_GetMouseState(&mouseX, &mouseY);
-                prevMouseX = mouseX;
-                prevMouseY = mouseY;
+                if (!inMenu) {
+                    prevMouseX = mouseX;
+                    prevMouseY = mouseY;
+                }
             } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
                 mouseDown = false;
             } else if (gameOver && e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_r) {
-                // Reset trò chơi
                 objects.clear();
                 newObjects.clear();
                 score = 0;
+                hp = 5;
                 spawnTimer = SPAWN_INTERVAL;
                 trail.points.clear();
                 mouseDown = false;
@@ -254,9 +328,13 @@ int main() {
             }
         }
 
-        if (!gameOver) {
+        SDL_GetMouseState(&mouseX, &mouseY); // Luôn cập nhật vị trí chuột
+
+        if (inMenu) {
+            renderMenu(renderer, font, inMenu, quit, mouseX, mouseY, mouseDown);
+        } else if (!gameOver) {
             int currentMouseX, currentMouseY;
-            SDL_GetMouseState(&currentMouseX, &currentMouseX);
+            SDL_GetMouseState(&currentMouseX, &currentMouseY);
 
             if (mouseDown && (currentMouseX != mouseX || currentMouseY != mouseY)) {
                 trail.addPoint(currentMouseX, currentMouseY);
@@ -275,8 +353,12 @@ int main() {
                 if (mouseDown && obj.isSliced(prevMouseX, prevMouseY, currentMouseX, currentMouseY) && !obj.sliced) {
                     if (obj.type == BOMB) {
                         shakeScreen(window, 5, 10);
-                        gameOver = true;
-                        break;
+                        hp--;
+                        obj.sliced = true;
+                        if (hp <= 0) {
+                            gameOver = true;
+                        }
+                        continue;
                     } else if (obj.type == FRUIT) {
                         obj.sliced = true;
                         score += 10;
@@ -302,10 +384,10 @@ int main() {
                 else if (obj.type == FRAGMENT) SDL_SetRenderDrawColor(renderer, 255, 165, 0, 255);
                 drawCircle(renderer, obj.x + OBJECT_SIZE / 4, obj.y + OBJECT_SIZE / 4, OBJECT_SIZE / 4);
             }
-            renderText(renderer, font, score);
+            renderText(renderer, font, score, hp);
         }
 
-        if (gameOver) {
+        if (gameOver && !inMenu) {
             SDL_Color red = {255, 0, 0, 255};
             SDL_Surface* surface = TTF_RenderText_Solid(font, "Game Over! Press R to Restart", red);
             if (surface) {
@@ -319,18 +401,18 @@ int main() {
             }
         }
 
-        SDL_RenderPresent(renderer);
+        if (!inMenu) {
+            SDL_RenderPresent(renderer);
+        }
         SDL_Delay(16);
-        int currentMouseX, currentMouseY;
-        SDL_GetMouseState(&currentMouseX, &currentMouseY);
-        if (!gameOver) {
+        int currentMouseX,currentMouseY;
+        if (!gameOver && !inMenu) {
             prevMouseX = mouseX;
             prevMouseY = mouseY;
             mouseX = currentMouseX;
             mouseY = currentMouseY;
         }
     }
-
     close(window, renderer, font);
     return 0;
 }
