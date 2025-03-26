@@ -1,7 +1,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-
+#include <SDL2/SDL_image.h>
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -282,12 +282,21 @@ int main() {
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     TTF_Font* font = nullptr;
+    SDL_Texture* backgroundTexture = nullptr;
+    
     if (!init(window, renderer, font)) {
         return -1;
     }
-
+    SDL_Surface* backgroundSurface = IMG_Load("E:/fruitss/asset/background.png");
+    if (!backgroundSurface) {
+        std::cout << "Failed to load background image: " << IMG_GetError() << std::endl;
+        close(window, renderer, font);
+        return -1;
+    }
+    backgroundTexture = SDL_CreateTextureFromSurface(renderer, backgroundSurface);
+    SDL_FreeSurface(backgroundSurface);
     bool quit = false;
-    bool inMenu = true; // Bắt đầu ở menu
+    bool inMenu = true;
     bool gameOver = false;
     SDL_Event e;
     std::vector<GameObject> objects;
