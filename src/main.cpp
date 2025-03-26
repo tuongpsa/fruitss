@@ -95,37 +95,21 @@ struct Trail {
 };
 
 bool init(SDL_Window*& window, SDL_Renderer*& renderer, TTF_Font*& font) {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-        return false;
-    }
-    if (TTF_Init() == -1) {
-        std::cout << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
-        return false;
-    }
+    SDL_Init(SDL_INIT_VIDEO);
+    TTF_Init();
+    IMG_Init(IMG_INIT_PNG);
 
     window = SDL_CreateWindow("Fruit Slicer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (!window) {
-        std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        return false;
-    }
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-        std::cout << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        return false;
-    }
-    font = TTF_OpenFont("E:/test1/novem.ttf", 24);
-    if (!font) {
-        std::cout << "Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
-        return false;
-    }
-    return true;
+    font = TTF_OpenFont("E:/fruitss/novem.ttf", 24);
+    return window && renderer && font;
 }
 
 void close(SDL_Window* window, SDL_Renderer* renderer, TTF_Font* font) {
     TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    IMG_Quit();
     TTF_Quit();
     SDL_Quit();
 }
@@ -216,28 +200,29 @@ void drawCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
     }
 }
 
-// Hàm menu game
-void renderMenu(SDL_Renderer* renderer, TTF_Font* font, bool& inMenu, bool& quit, int mouseX, int mouseY, bool mouseDown) {
+void renderMenu(SDL_Renderer* renderer, TTF_Font* font,SDL_Texture* menuTexture, bool& inMenu, bool& quit, int mouseX, int mouseY, bool mouseDown) {
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
+            if (menuTexture) {
+                SDL_RenderCopy(renderer, menuTexture, NULL, NULL);
+            }
 
     SDL_Color white = {255, 255, 255, 255};
-    // Nút Start
     SDL_Surface* startSurface = TTF_RenderText_Solid(font, "Start", white);
     if (startSurface) {
         int startW = startSurface->w;
         int startH = startSurface->h;
         SDL_Rect startRect = {SCREEN_WIDTH / 2 - startW / 2, SCREEN_HEIGHT / 2 - 50, startW, startH};
-        // Kiểm tra chuột hover
         bool startHovered = (mouseX >= startRect.x && mouseX <= startRect.x + startRect.w &&
                              mouseY >= startRect.y && mouseY <= startRect.y + startRect.h);
         if (startHovered) {
-            startRect.w = static_cast<int>(startW * 0.9); // Thu nhỏ 90%
+            startRect.w = static_cast<int>(startW * 0.9);
             startRect.h = static_cast<int>(startH * 0.9);
-            startRect.x += (startW - startRect.w) / 2; // Căn giữa lại
+            startRect.x += (startW - startRect.w) / 2;
             startRect.y += (startH - startRect.h) / 2;
             if (mouseDown) {
-                inMenu = false; // Thoát menu, bắt đầu game
+                inMenu = false;
             }
         }
         SDL_Texture* startTexture = SDL_CreateTextureFromSurface(renderer, startSurface);
@@ -248,22 +233,20 @@ void renderMenu(SDL_Renderer* renderer, TTF_Font* font, bool& inMenu, bool& quit
         SDL_FreeSurface(startSurface);
     }
 
-    // Nút Exit
     SDL_Surface* exitSurface = TTF_RenderText_Solid(font, "Exit", white);
     if (exitSurface) {
         int exitW = exitSurface->w;
         int exitH = exitSurface->h;
         SDL_Rect exitRect = {SCREEN_WIDTH / 2 - exitW / 2, SCREEN_HEIGHT / 2 + 50, exitW, exitH};
-        // Kiểm tra chuột hover
         bool exitHovered = (mouseX >= exitRect.x && mouseX <= exitRect.x + exitRect.w &&
                             mouseY >= exitRect.y && mouseY <= exitRect.y + exitRect.h);
         if (exitHovered) {
-            exitRect.w = static_cast<int>(exitW * 0.9); // Thu nhỏ 90%
+            exitRect.w = static_cast<int>(exitW * 0.9);
             exitRect.h = static_cast<int>(exitH * 0.9);
-            exitRect.x += (exitW - exitRect.w) / 2; // Căn giữa lại
+            exitRect.x += (exitW - exitRect.w) / 2;
             exitRect.y += (exitH - exitRect.h) / 2;
             if (mouseDown) {
-                quit = true; // Thoát game
+                quit = true;
             }
         }
         SDL_Texture* exitTexture = SDL_CreateTextureFromSurface(renderer, exitSurface);
@@ -283,18 +266,26 @@ int main() {
     SDL_Renderer* renderer = nullptr;
     TTF_Font* font = nullptr;
     SDL_Texture* backgroundTexture = nullptr;
-    
+    SDL_Texture* menuTexture = nullptr;
+
     if (!init(window, renderer, font)) {
         return -1;
     }
+
+    
     SDL_Surface* backgroundSurface = IMG_Load("E:/fruitss/asset/background.png");
-    if (!backgroundSurface) {
-        std::cout << "Failed to load background image: " << IMG_GetError() << std::endl;
-        close(window, renderer, font);
-        return -1;
+    if (backgroundSurface) {
+        backgroundTexture = SDL_CreateTextureFromSurface(renderer, backgroundSurface);
+        SDL_FreeSurface(backgroundSurface);
     }
-    backgroundTexture = SDL_CreateTextureFromSurface(renderer, backgroundSurface);
-    SDL_FreeSurface(backgroundSurface);
+    SDL_Surface* menuSurface = IMG_Load("E:/fruitss/asset/menu.PNG");
+    if (menuSurface) {
+        menuTexture = SDL_CreateTextureFromSurface(renderer, menuSurface);
+        SDL_FreeSurface(menuSurface);
+    } else {
+        std::cout << "Failed to load menu image: " << IMG_GetError() << std::endl;
+    }
+    SDL_Texture* bomTexture = IMG_LoadTexture(renderer, "E:/fruitss/asset/bom1.png");
     bool quit = false;
     bool inMenu = true;
     bool gameOver = false;
@@ -337,16 +328,14 @@ int main() {
             }
         }
 
-        SDL_GetMouseState(&mouseX, &mouseY); // Luôn cập nhật vị trí chuột
+        SDL_GetMouseState(&mouseX, &mouseY);
 
         if (inMenu) {
-            renderMenu(renderer, font, inMenu, quit, mouseX, mouseY, mouseDown);
+            renderMenu(renderer, font, menuTexture, inMenu, quit, mouseX, mouseY, mouseDown);
         } else if (!gameOver) {
-            int currentMouseX, currentMouseY;
-            SDL_GetMouseState(&currentMouseX, &currentMouseY);
-
-            if (mouseDown && (currentMouseX != mouseX || currentMouseY != mouseY)) {
-                trail.addPoint(currentMouseX, currentMouseY);
+            // Loại bỏ currentMouseX và currentMouseY, sử dụng trực tiếp mouseX và mouseY
+            if (mouseDown) {
+                trail.addPoint(mouseX, mouseY);
             }
 
             if (++spawnTimer >= SPAWN_INTERVAL) {
@@ -359,9 +348,9 @@ int main() {
 
             newObjects.clear();
             for (auto& obj : objects) {
-                if (mouseDown && obj.isSliced(prevMouseX, prevMouseY, currentMouseX, currentMouseY) && !obj.sliced) {
+                if (mouseDown && obj.isSliced(prevMouseX, prevMouseY, mouseX, mouseY) && !obj.sliced) {
                     if (obj.type == BOMB) {
-                        shakeScreen(window, 5, 10);
+                        shakeScreen(window, 10, 10);
                         hp--;
                         obj.sliced = true;
                         if (hp <= 0) {
@@ -386,15 +375,31 @@ int main() {
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_RenderClear(renderer);
+            if (backgroundTexture) {
+                SDL_RenderCopy(renderer, backgroundTexture, NULL, NULL);
+            }
 
             for (auto& obj : objects) {
                 if (obj.type == FRUIT) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                else if (obj.type == BOMB) SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+                else if (obj.type == BOMB) {
+                    if (bomTexture) {
+                        int texWidth, texHeight;
+                        SDL_QueryTexture(bomTexture, NULL, NULL, &texWidth, &texHeight);
+                        SDL_Rect bomRect = {obj.x, obj.y, texWidth/2, texHeight/2};
+            
+                        if (bomRect.x >= 0 && bomRect.x < SCREEN_WIDTH &&
+                            bomRect.y >= 0 && bomRect.y < SCREEN_HEIGHT) {
+                            SDL_RenderCopy(renderer, bomTexture, NULL, &bomRect);
+                        }
+                    }
+                    continue;
+                }
                 else if (obj.type == FRAGMENT) SDL_SetRenderDrawColor(renderer, 255, 165, 0, 255);
                 drawCircle(renderer, obj.x + OBJECT_SIZE / 4, obj.y + OBJECT_SIZE / 4, OBJECT_SIZE / 4);
             }
             renderText(renderer, font, score, hp);
         }
+    
 
         if (gameOver && !inMenu) {
             SDL_Color red = {255, 0, 0, 255};
@@ -414,14 +419,15 @@ int main() {
             SDL_RenderPresent(renderer);
         }
         SDL_Delay(16);
-        int currentMouseX,currentMouseY;
+
         if (!gameOver && !inMenu) {
             prevMouseX = mouseX;
             prevMouseY = mouseY;
-            mouseX = currentMouseX;
-            mouseY = currentMouseY;
+            SDL_GetMouseState(&mouseX, &mouseY);
         }
     }
+
+    SDL_DestroyTexture(backgroundTexture);
     close(window, renderer, font);
     return 0;
 }

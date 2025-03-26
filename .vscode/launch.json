@@ -4,14 +4,14 @@
             "name": "C/C++: g++.exe build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "E:/fruitss/test1/bin/Debug/test1.exe",
+            "program": "E:\\fruitss\\game.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "E:/test1/bin/Debug",
+            "cwd": "E:/fruitss/MinGW/bin",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "E:/project/MinGW/bin/gdb.exe",
+            "miDebuggerPath": "E:\\fruitss\\MinGW\\bin\\gdb.exe",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -24,7 +24,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "C/C++: g++.exe build fruits"
+            "preLaunchTask": "C/C++: g++.exe build active file"
         }
     ],
     "version": "2.0.0"

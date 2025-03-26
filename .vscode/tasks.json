@@ -3,21 +3,23 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
-            "command": "E:/project/MinGW/bin/g++.exe",
+            "command": "E:/fruitss/MinGW/bin/g++.exe",
             "args": [
-    "-g",
-    "E:\\fruitss\\test1\\main.cpp",
-    "-o",
-    "E:\\fruitss\\test1\\bin\\Debug\\test1.exe",
-    "-lmingw32",
-    "-lSDL2main",
-    "-lSDL2",
-    "-lSDL2_ttf",
-    "-lSDL2_image"
-],
-
+                "-fdiagnostics-color=always",
+                "-g",
+                "E:\\fruitss\\src\\*.cpp",
+                "-IE:\\fruitss\\header\\",
+                "-lmingw32",
+                "-lSDL2main",
+                "-lSDL2",
+                "-lSDL2_image",
+                "-lSDL2_mixer",
+                "-lSDL2_ttf",
+                "-o",
+                "E:\\fruitss\\game.exe"
+            ],
             "options": {
-                "cwd": "E:/project/MinGW/bin"
+                "cwd": "E:/fruitss/MinGW/bin"
             },
             "problemMatcher": [
                 "$gcc"
